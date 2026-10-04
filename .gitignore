@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Discovery runtime output
+agents/discovery-agent/output/
+agents/discovery-agent/agent/output/

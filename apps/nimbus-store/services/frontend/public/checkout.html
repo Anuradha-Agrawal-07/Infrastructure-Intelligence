@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkout — Nimbus Store</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="/config.js"></script>
+</head>
+<body>
+  <header class="site">
+    <a class="logo" href="/"><span class="dot"></span> Nimbus Store</a>
+    <nav class="site">
+      <a href="/">Shop</a>
+      <a href="/cart.html">Cart <span class="cart-badge" id="cart-count">0</span></a>
+      <a href="/orders.html">Orders</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1 class="page-title">Checkout</h1>
+    <p class="page-subtitle">Placing this order calls order-service, which validates and reserves stock on product-service in real time.</p>
+
+    <div id="banner"></div>
+    <div id="summary-wrap"></div>
+
+    <form class="checkout" id="checkout-form" style="margin-top:24px;">
+      <label for="name">Full name</label>
+      <input type="text" id="name" required placeholder="Ada Lovelace" />
+
+      <label for="email">Email</label>
+      <input type="email" id="email" required placeholder="ada@example.com" />
+
+      <button type="submit" id="submit-btn">Place order</button>
+    </form>
+  </main>
+
+  <footer class="site">Nimbus Store · frontend → api-gateway → product-service / order-service → postgres</footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+    const items = Cart.read();
+    const summaryWrap = document.getElementById('summary-wrap');
+    const banner = document.getElementById('banner');
+    const form = document.getElementById('checkout-form');
+
+    if (items.length === 0) {
+      summaryWrap.innerHTML = '<p class="empty-state">Your cart is empty. <a href="/">Go shopping</a></p>';
+      form.style.display = 'none';
+    } else {
+      summaryWrap.innerHTML = `
+        <div class="summary">
+          ${items.map((i) => `
+            <div class="row"><span>${i.quantity} × ${i.name}</span><span>${formatPrice(i.price_cents * i.quantity)}</span></div>
+          `).join('')}
+          <div class="row total"><span>Total</span><span>${formatPrice(Cart.totalCents())}</span></div>
+        </div>
+      `;
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = document.getElementById('submit-btn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Placing order…';
+      banner.innerHTML = '';
+
+      const payload = {
+        customer_name: document.getElementById('name').value.trim(),
+        customer_email: document.getElementById('email').value.trim(),
+        items: items.map((i) => ({ product_id: i.product_id, quantity: i.quantity })),
+      };
+
+      try {
+        const order = await Api.createOrder(payload);
+        Cart.clear();
+        location.href = `/order-confirmation.html?id=${order.id}`;
+      } catch (err) {
+        banner.innerHTML = `<div class="banner error">Order failed: ${err.message}</div>`;
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Place order';
+      }
+    });
+  </script>
+</body>
+</html>

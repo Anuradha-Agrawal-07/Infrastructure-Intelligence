@@ -1,0 +1,119 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pm-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: apppassword
+      POSTGRES_DB: appdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U appuser -d appdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - pm-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: pm-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - pm-network
+
+  auth-service:
+    build: ./services/auth-service
+    container_name: pm-auth-service
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg2://appuser:apppassword@postgres:5432/appdb
+      JWT_SECRET: change-this-secret-in-production
+      JWT_EXPIRE_MINUTES: "60"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8001:8001"
+    networks:
+      - pm-network
+
+  task-service:
+    build: ./services/task-service
+    container_name: pm-task-service
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg2://appuser:apppassword@postgres:5432/appdb
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8002:8002"
+    networks:
+      - pm-network
+
+  notification-service:
+    build: ./services/notification-service
+    container_name: pm-notification-service
+    restart: unless-stopped
+    environment:
+      REDIS_ADDR: redis:6379
+      PORT: "8003"
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "8003:8003"
+    networks:
+      - pm-network
+
+  api-gateway:
+    build: ./services/api-gateway
+    container_name: pm-api-gateway
+    restart: unless-stopped
+    environment:
+      AUTH_SERVICE_URL: http://auth-service:8001
+      TASK_SERVICE_URL: http://task-service:8002
+      NOTIFICATION_SERVICE_URL: http://notification-service:8003
+    depends_on:
+      - auth-service
+      - task-service
+      - notification-service
+    ports:
+      - "8000:8000"
+    networks:
+      - pm-network
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8000
+    container_name: pm-frontend
+    restart: unless-stopped
+    depends_on:
+      - api-gateway
+    ports:
+      - "3000:3000"
+    networks:
+      - pm-network
+
+networks:
+  pm-network:
+    driver: bridge
+
+volumes:
+  postgres-data:

@@ -1,0 +1,42 @@
+{
+  "_comment": "Static reference manifest of the demo app's topology. Not consumed by any code yet - it exists so a future discovery/monitoring system has a known-good baseline to check itself against.",
+  "services": [
+    {
+      "name": "frontend",
+      "type": "web",
+      "internal_url": "http://frontend:3000",
+      "public_url": "http://localhost:3000",
+      "health_endpoint": "/health",
+      "depends_on": ["api-gateway"]
+    },
+    {
+      "name": "api-gateway",
+      "type": "gateway",
+      "internal_url": "http://api-gateway:8080",
+      "public_url": "http://localhost:8080",
+      "health_endpoint": "/health",
+      "deep_health_endpoint": "/health/deep",
+      "depends_on": ["product-service", "order-service"]
+    },
+    {
+      "name": "product-service",
+      "type": "backend",
+      "internal_url": "http://product-service:4001",
+      "health_endpoint": "/health",
+      "depends_on": ["postgres"]
+    },
+    {
+      "name": "order-service",
+      "type": "backend",
+      "internal_url": "http://order-service:4002",
+      "health_endpoint": "/health",
+      "depends_on": ["postgres", "product-service"]
+    },
+    {
+      "name": "postgres",
+      "type": "database",
+      "internal_url": "postgres:5432",
+      "depends_on": []
+    }
+  ]
+}

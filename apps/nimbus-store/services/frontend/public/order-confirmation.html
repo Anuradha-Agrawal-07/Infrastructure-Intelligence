@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order confirmed — Nimbus Store</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="/config.js"></script>
+</head>
+<body>
+  <header class="site">
+    <a class="logo" href="/"><span class="dot"></span> Nimbus Store</a>
+    <nav class="site">
+      <a href="/">Shop</a>
+      <a href="/cart.html">Cart <span class="cart-badge" id="cart-count">0</span></a>
+      <a href="/orders.html">Orders</a>
+    </nav>
+  </header>
+
+  <main id="content">
+    <p class="empty-state">Loading…</p>
+  </main>
+
+  <footer class="site">Nimbus Store · frontend → api-gateway → product-service / order-service → postgres</footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const orderId = params.get('id');
+    const content = document.getElementById('content');
+
+    async function load() {
+      if (!orderId) {
+        content.innerHTML = '<p class="empty-state">No order specified.</p>';
+        return;
+      }
+      try {
+        const order = await Api.getOrder(orderId);
+        content.innerHTML = `
+          <div class="banner success">Order #${order.id} confirmed! A confirmation would normally be emailed to ${order.customer_email}.</div>
+          <h1 class="page-title">Order #${order.id}</h1>
+          <p class="page-subtitle">Placed ${new Date(order.created_at).toLocaleString()} · <span class="badge">${order.status}</span></p>
+          <div class="summary">
+            ${order.items.map((i) => `
+              <div class="order-item-row"><span>${i.quantity} × ${i.product_name}</span><span>${formatPrice(i.unit_price_cents * i.quantity)}</span></div>
+            `).join('')}
+            <div class="row total"><span>Total</span><span>${formatPrice(order.total_cents)}</span></div>
+          </div>
+          <div style="margin-top:24px;"><a class="btn" href="/">Continue shopping</a></div>
+        `;
+      } catch (err) {
+        content.innerHTML = `<div class="banner error">Couldn't load order: ${err.message}</div>`;
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

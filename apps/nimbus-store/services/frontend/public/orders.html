@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Orders — Nimbus Store</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="/config.js"></script>
+</head>
+<body>
+  <header class="site">
+    <a class="logo" href="/"><span class="dot"></span> Nimbus Store</a>
+    <nav class="site">
+      <a href="/">Shop</a>
+      <a href="/cart.html">Cart <span class="cart-badge" id="cart-count">0</span></a>
+      <a href="/orders.html">Orders</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1 class="page-title">All Orders</h1>
+    <p class="page-subtitle">Fetched live from order-service via the gateway.</p>
+    <div id="content"><p class="empty-state">Loading…</p></div>
+  </main>
+
+  <footer class="site">Nimbus Store · frontend → api-gateway → product-service / order-service → postgres</footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+    async function load() {
+      const content = document.getElementById('content');
+      try {
+        const orders = await Api.getOrders();
+        if (orders.length === 0) {
+          content.innerHTML = '<p class="empty-state">No orders yet. <a href="/">Go shopping</a></p>';
+          return;
+        }
+        content.innerHTML = `
+          <table class="orders">
+            <thead>
+              <tr><th>Order</th><th>Customer</th><th>Status</th><th>Total</th><th>Placed</th></tr>
+            </thead>
+            <tbody>
+              ${orders.map((o) => `
+                <tr>
+                  <td><a href="/order-confirmation.html?id=${o.id}">#${o.id}</a></td>
+                  <td>${o.customer_name}</td>
+                  <td><span class="badge">${o.status}</span></td>
+                  <td>${formatPrice(o.total_cents)}</td>
+                  <td>${new Date(o.created_at).toLocaleString()}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } catch (err) {
+        content.innerHTML = `<div class="banner error">Couldn't load orders: ${err.message}</div>`;
+      }
+    }
+    load();
+  </script>
+</body>
+</html>

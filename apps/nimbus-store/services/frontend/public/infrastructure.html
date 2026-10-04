@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>Infrastructure | Nimbus Store</title>
+
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+
+  <header class="site">
+    <a class="logo" href="/">
+      <span class="dot"></span>
+      Nimbus Store
+    </a>
+
+    <nav class="site">
+      <a href="/">Shop</a>
+      <a href="/cart.html">
+        Cart
+        <span class="cart-badge" id="cart-count">0</span>
+      </a>
+      <a href="/orders.html">Orders</a>
+      <a href="/infrastructure.html">
+        Infrastructure
+      </a>
+    </nav>
+  </header>
+
+
+  <main class="infrastructure-main">
+
+    <div class="infra-header">
+
+      <div>
+        <h1 class="page-title">
+          Infrastructure
+        </h1>
+
+        <p class="page-subtitle">
+          Correlated dependency view generated from
+          runtime topology changes.
+        </p>
+      </div>
+
+      <button
+        id="refresh-infrastructure"
+        class="secondary refresh-button"
+      >
+        ↻ Refresh
+      </button>
+
+    </div>
+
+
+    <!-- Loading -->
+
+    <div id="loading-state" class="infra-state">
+      Loading infrastructure data...
+    </div>
+
+
+    <!-- No data -->
+
+    <div
+      id="empty-state"
+      class="infra-state"
+      style="display: none;"
+    >
+      <h2>No correlation data</h2>
+      <p id="empty-message">
+        No infrastructure data is available.
+      </p>
+    </div>
+
+
+    <!-- Error -->
+
+    <div
+      id="error-state"
+      class="infra-state error-state"
+      style="display: none;"
+    >
+      <h2>Unable to load infrastructure data</h2>
+      <p id="error-message">
+        Failed to load infrastructure data.
+      </p>
+    </div>
+
+
+    <!-- Dashboard -->
+
+    <div
+      id="dashboard-content"
+      style="display: none;"
+    >
+
+      <!-- Summary cards -->
+
+      <section class="infra-summary">
+
+        <div class="infra-card">
+          <span class="infra-card-label">
+            Affected Services
+          </span>
+
+          <strong
+            id="affected-count"
+            class="infra-card-value"
+          >
+            0
+          </strong>
+        </div>
+
+
+        <div class="infra-card">
+          <span class="infra-card-label">
+            Correlated Services
+          </span>
+
+          <strong
+            id="correlated-count"
+            class="infra-card-value"
+          >
+            0
+          </strong>
+        </div>
+
+
+        <div class="infra-card">
+          <span class="infra-card-label">
+            Connections Removed
+          </span>
+
+          <strong
+            id="removed-count"
+            class="infra-card-value"
+          >
+            0
+          </strong>
+        </div>
+
+      </section>
+
+
+      <!-- Dependency graph -->
+
+      <section class="infra-panel">
+
+        <div class="infra-panel-header">
+
+          <div>
+            <h2>
+              Correlated Dependency Subgraph
+            </h2>
+
+            <p>
+              Services directly involved in the detected
+              topology change.
+            </p>
+          </div>
+
+          <span
+            id="last-updated"
+            class="infra-muted"
+          ></span>
+
+        </div>
+
+
+        <div class="graph-container">
+
+          <svg
+            id="dependency-graph"
+            role="img"
+            aria-label="Infrastructure dependency graph"
+          ></svg>
+
+        </div>
+
+
+        <div class="graph-legend">
+
+          <span>
+            <span class="legend-dot affected"></span>
+            Affected
+          </span>
+
+          <span>
+            <span class="legend-dot correlated"></span>
+            Correlated
+          </span>
+
+          <span>
+            <span class="legend-dot unaffected"></span>
+            Unaffected
+          </span>
+
+        </div>
+
+      </section>
+
+
+      <!-- Change details -->
+
+      <section class="infra-details">
+
+        <div class="infra-panel">
+
+          <h2>
+            Affected Services
+          </h2>
+
+          <div id="affected-services">
+          </div>
+
+        </div>
+
+
+        <div class="infra-panel">
+
+          <h2>
+            Removed Connections
+          </h2>
+
+          <div id="removed-connections">
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+
+  </main>
+
+
+  <footer class="site">
+    Nimbus Store · Infrastructure Intelligence
+  </footer>
+
+
+  <script src="js/infrastructure.js"></script>
+
+</body>
+</html>

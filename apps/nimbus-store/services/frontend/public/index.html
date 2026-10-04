@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nimbus Store</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="/config.js"></script>
+</head>
+<body>
+  <header class="site">
+    <a class="logo" href="/"><span class="dot"></span> Nimbus Store</a>
+    <nav class="site">
+      <a href="/">Shop</a>
+      <a href="/cart.html">Cart <span class="cart-badge" id="cart-count">0</span></a>
+      <a href="/orders.html">Orders</a>
+      <a href="/infrastructure.html">Infrastructure</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1 class="page-title">Shop</h1>
+    <p class="page-subtitle">Demo storefront for Infrastructure Intelligence — every click here calls real services.</p>
+
+    <div class="filters" id="filters"></div>
+    <div id="banner"></div>
+    <div class="grid" id="product-grid">
+      <p class="empty-state">Loading products…</p>
+    </div>
+  </main>
+
+  <footer class="site">Nimbus Store · frontend → api-gateway → product-service / order-service → postgres</footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+    const CATEGORIES = ['All', 'Electronics', 'Furniture', 'Lifestyle', 'Kitchen', 'Fitness'];
+    let activeCategory = 'All';
+
+    function renderFilters() {
+      const el = document.getElementById('filters');
+      el.innerHTML = '';
+      CATEGORIES.forEach((cat) => {
+        const btn = document.createElement('button');
+        btn.textContent = cat;
+        if (cat === activeCategory) btn.classList.add('active');
+        btn.onclick = () => {
+          activeCategory = cat;
+          renderFilters();
+          loadProducts();
+        };
+        el.appendChild(btn);
+      });
+    }
+
+    function productCard(p) {
+      const lowStock = p.stock <= 15;
+      return `
+        <div class="card">
+          <div class="emoji">${p.image_emoji}</div>
+          <span class="category-tag">${p.category}</span>
+          <h3><a href="/product.html?id=${p.id}">${p.name}</a></h3>
+          <p class="desc">${p.description}</p>
+          <div class="price">${formatPrice(p.price_cents)}</div>
+          <div class="stock ${lowStock ? 'low' : ''}">${p.stock > 0 ? `${p.stock} in stock` : 'Out of stock'}</div>
+          <a class="btn" href="/product.html?id=${p.id}">View</a>
+        </div>
+      `;
+    }
+
+    async function loadProducts() {
+      const grid = document.getElementById('product-grid');
+      const banner = document.getElementById('banner');
+      grid.innerHTML = '<p class="empty-state">Loading products…</p>';
+      banner.innerHTML = '';
+      try {
+        const category = activeCategory === 'All' ? null : activeCategory;
+        const products = await Api.getProducts(category);
+        grid.innerHTML = products.length
+          ? products.map(productCard).join('')
+          : '<p class="empty-state">No products in this category.</p>';
+      } catch (err) {
+        banner.innerHTML = `<div class="banner error">Couldn't load products: ${err.message}. Is api-gateway running?</div>`;
+        grid.innerHTML = '';
+      }
+    }
+
+    renderFilters();
+    loadProducts();
+  </script>
+</body>
+</html>

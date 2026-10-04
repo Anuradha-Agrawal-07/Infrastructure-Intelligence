@@ -1,0 +1,192 @@
+{
+  "nodes": [
+    {
+      "id": "process:657",
+      "type": "process",
+      "name": "node",
+      "pid": 657,
+      "cmdline": "node server.js",
+      "env_hints": {
+        "PORT": "3000",
+        "API_GATEWAY_PUBLIC_URL": "http://localhost:8080",
+        "IS_SANDBOX": "yes"
+      },
+      "observed_listening_ports": [
+        3000
+      ],
+      "identified_via": "procfs"
+    },
+    {
+      "id": "process:655",
+      "type": "process",
+      "name": "node",
+      "pid": 655,
+      "cmdline": "node src/index.js",
+      "env_hints": {
+        "PGPORT": "5432",
+        "PORT": "4002",
+        "PGDATABASE": "storedb",
+        "PRODUCT_SERVICE_URL": "http://localhost:4001",
+        "PGHOST": "localhost",
+        "PGUSER": "store",
+        "IS_SANDBOX": "yes"
+      },
+      "observed_listening_ports": [
+        4002
+      ],
+      "identified_via": "procfs"
+    },
+    {
+      "id": "process:654",
+      "type": "process",
+      "name": "node",
+      "pid": 654,
+      "cmdline": "node src/index.js",
+      "env_hints": {
+        "PGPORT": "5432",
+        "PORT": "4001",
+        "PGDATABASE": "storedb",
+        "PGHOST": "localhost",
+        "PGUSER": "store",
+        "IS_SANDBOX": "yes"
+      },
+      "observed_listening_ports": [
+        4001
+      ],
+      "identified_via": "procfs"
+    },
+    {
+      "id": "process:496",
+      "type": "process",
+      "name": "python3",
+      "pid": 496,
+      "cmdline": "python3 receiver.py --port 8090",
+      "env_hints": {
+        "IS_SANDBOX": "yes"
+      },
+      "observed_listening_ports": [
+        8090
+      ],
+      "identified_via": "procfs"
+    },
+    {
+      "id": "process:656",
+      "type": "process",
+      "name": "node",
+      "pid": 656,
+      "cmdline": "node src/index.js",
+      "env_hints": {
+        "PORT": "8080",
+        "PRODUCT_SERVICE_URL": "http://localhost:4001",
+        "ORDER_SERVICE_URL": "http://localhost:4002",
+        "IS_SANDBOX": "yes"
+      },
+      "observed_listening_ports": [
+        8080
+      ],
+      "identified_via": "procfs"
+    },
+    {
+      "id": "process:517",
+      "type": "process",
+      "name": "postgres",
+      "pid": 517,
+      "cmdline": "/usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/16/main -c config_file=/etc/postgresql/16/main/postgresql.conf",
+      "env_hints": {
+        "PG_OOM_ADJUST_FILE": "/proc/self/oom_score_adj",
+        "PG_GRANDPARENT_PID": "512",
+        "PGLOCALEDIR": "/usr/share/locale",
+        "PGSYSCONFDIR": "/etc/postgresql-common",
+        "PGDATA": "/var/lib/postgresql/16/main"
+      },
+      "observed_listening_ports": [
+        5432
+      ],
+      "identified_via": "procfs"
+    },
+    {
+      "id": "process:755",
+      "type": "process",
+      "name": "curl",
+      "pid": 755,
+      "cmdline": "curl -s http://localhost:8080/api/products",
+      "env_hints": {
+        "IS_SANDBOX": "yes"
+      },
+      "observed_listening_ports": [],
+      "identified_via": "procfs"
+    },
+    {
+      "id": "process:823",
+      "type": "process",
+      "name": "curl",
+      "pid": 823,
+      "cmdline": "curl -s -X POST http://localhost:8080/api/orders -H Content-Type: application/json -d {\"customer_name\":\"Test User\",\"customer_email\":\"t@example.com\",\"items\":[{\"product_id\":1,\"quantity\":1}]}",
+      "env_hints": {
+        "IS_SANDBOX": "yes"
+      },
+      "observed_listening_ports": [],
+      "identified_via": "procfs"
+    }
+  ],
+  "edges": [
+    {
+      "source": "process:654",
+      "target": "process:517",
+      "remote_port": 5432,
+      "observed_connections": 15,
+      "protocol": "tcp",
+      "evidence": "proc_net_tcp:ESTABLISHED (merged samples)"
+    },
+    {
+      "source": "process:655",
+      "target": "process:517",
+      "remote_port": 5432,
+      "observed_connections": 15,
+      "protocol": "tcp",
+      "evidence": "proc_net_tcp:ESTABLISHED (merged samples)"
+    },
+    {
+      "source": "process:655",
+      "target": "process:654",
+      "remote_port": 4001,
+      "observed_connections": 30,
+      "protocol": "tcp",
+      "evidence": "proc_net_tcp:ESTABLISHED (merged samples)"
+    },
+    {
+      "source": "process:755",
+      "target": "process:656",
+      "remote_port": 8080,
+      "observed_connections": 1,
+      "protocol": "tcp",
+      "evidence": "proc_net_tcp:ESTABLISHED (merged samples)"
+    },
+    {
+      "source": "process:656",
+      "target": "process:655",
+      "remote_port": 4002,
+      "observed_connections": 1,
+      "protocol": "tcp",
+      "evidence": "proc_net_tcp:ESTABLISHED (merged samples)"
+    },
+    {
+      "source": "process:823",
+      "target": "process:656",
+      "remote_port": 8080,
+      "observed_connections": 1,
+      "protocol": "tcp",
+      "evidence": "proc_net_tcp:ESTABLISHED (merged samples)"
+    },
+    {
+      "source": "process:656",
+      "target": "process:654",
+      "remote_port": 4001,
+      "observed_connections": 1,
+      "protocol": "tcp",
+      "evidence": "proc_net_tcp:ESTABLISHED (merged samples)"
+    }
+  ],
+  "discovery_method": "procfs_sockets (merged over interval sampling)",
+  "generated_at": "2026-09-05T07:23:56.924323"
+}

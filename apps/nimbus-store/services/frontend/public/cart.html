@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cart — Nimbus Store</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="/config.js"></script>
+</head>
+<body>
+  <header class="site">
+    <a class="logo" href="/"><span class="dot"></span> Nimbus Store</a>
+    <nav class="site">
+      <a href="/">Shop</a>
+      <a href="/cart.html">Cart <span class="cart-badge" id="cart-count">0</span></a>
+      <a href="/orders.html">Orders</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1 class="page-title">Your Cart</h1>
+    <p class="page-subtitle">Cart is local to your browser. Checkout is what talks to the backend.</p>
+    <div id="cart-content"></div>
+  </main>
+
+  <footer class="site">Nimbus Store · frontend → api-gateway → product-service / order-service → postgres</footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+    function renderCart() {
+      const items = Cart.read();
+      const el = document.getElementById('cart-content');
+
+      if (items.length === 0) {
+        el.innerHTML = '<p class="empty-state">Your cart is empty. <a href="/">Go shopping</a></p>';
+        return;
+      }
+
+      const rows = items.map((i) => `
+        <div class="cart-row">
+          <div class="emoji">${i.emoji}</div>
+          <div class="info">
+            <div>${i.name}</div>
+            <div class="stock">${formatPrice(i.price_cents)} each</div>
+          </div>
+          <div class="qty-controls">
+            <button class="secondary" onclick="changeQty(${i.product_id}, ${i.quantity - 1})">−</button>
+            <span>${i.quantity}</span>
+            <button class="secondary" onclick="changeQty(${i.product_id}, ${i.quantity + 1})">+</button>
+          </div>
+          <div style="width:80px; text-align:right;">${formatPrice(i.price_cents * i.quantity)}</div>
+          <button class="danger" onclick="removeItem(${i.product_id})">Remove</button>
+        </div>
+      `).join('');
+
+      const total = Cart.totalCents();
+
+      el.innerHTML = `
+        ${rows}
+        <div class="summary">
+          <div class="row total"><span>Total</span><span>${formatPrice(total)}</span></div>
+        </div>
+        <div style="margin-top:20px; display:flex; gap:12px;">
+          <a class="btn" href="/checkout.html">Checkout</a>
+          <button class="secondary" onclick="Cart.clear(); renderCart();">Clear cart</button>
+        </div>
+      `;
+    }
+
+    function changeQty(productId, qty) {
+      Cart.setQuantity(productId, qty);
+      renderCart();
+    }
+
+    function removeItem(productId) {
+      Cart.remove(productId);
+      renderCart();
+    }
+
+    renderCart();
+  </script>
+</body>
+</html>

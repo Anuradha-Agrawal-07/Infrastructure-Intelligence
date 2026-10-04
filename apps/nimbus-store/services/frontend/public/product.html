@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product — Nimbus Store</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="/config.js"></script>
+</head>
+<body>
+  <header class="site">
+    <a class="logo" href="/"><span class="dot"></span> Nimbus Store</a>
+    <nav class="site">
+      <a href="/">Shop</a>
+      <a href="/cart.html">Cart <span class="cart-badge" id="cart-count">0</span></a>
+      <a href="/orders.html">Orders</a>
+    </nav>
+  </header>
+
+  <main id="content">
+    <p class="empty-state">Loading…</p>
+  </main>
+
+  <footer class="site">Nimbus Store · frontend → api-gateway → product-service / order-service → postgres</footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const productId = params.get('id');
+    const content = document.getElementById('content');
+
+    async function load() {
+      if (!productId) {
+        content.innerHTML = '<p class="empty-state">No product specified.</p>';
+        return;
+      }
+      try {
+        const p = await Api.getProduct(productId);
+        content.innerHTML = `
+          <a href="/" class="page-subtitle">&larr; Back to shop</a>
+          <div class="product-detail" style="margin-top:16px;">
+            <div class="visual">${p.image_emoji}</div>
+            <div class="info">
+              <span class="category-tag">${p.category}</span>
+              <h1 class="page-title">${p.name}</h1>
+              <p class="page-subtitle">${p.description}</p>
+              <div class="price" style="font-size:1.4rem;">${formatPrice(p.price_cents)}</div>
+              <div class="stock ${p.stock <= 15 ? 'low' : ''}">${p.stock > 0 ? `${p.stock} in stock` : 'Out of stock'}</div>
+              <div class="qty-select">
+                <label for="qty">Qty</label>
+                <input type="number" id="qty" value="1" min="1" max="${p.stock}" ${p.stock === 0 ? 'disabled' : ''} />
+                <button id="add-btn" ${p.stock === 0 ? 'disabled' : ''}>Add to cart</button>
+              </div>
+              <div id="add-banner"></div>
+            </div>
+          </div>
+        `;
+        document.getElementById('add-btn')?.addEventListener('click', () => {
+          const qty = Math.max(1, parseInt(document.getElementById('qty').value, 10) || 1);
+          Cart.add(p, qty);
+          document.getElementById('add-banner').innerHTML =
+            `<div class="banner success">Added ${qty} × ${p.name} to your cart. <a href="/cart.html">View cart</a></div>`;
+        });
+      } catch (err) {
+        content.innerHTML = `<div class="banner error">Couldn't load product: ${err.message}</div>`;
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

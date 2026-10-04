@@ -1,0 +1,104 @@
+version: "3.9"
+
+# All services sit on one bridge network and talk to each other by
+# container name. Env vars carry every URL/credential, so nothing here
+# is hardcoded in a way that would block adding a discovery layer later.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ii-postgres
+    environment:
+      POSTGRES_USER: store
+      POSTGRES_PASSWORD: store
+      POSTGRES_DB: storedb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./services/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U store -d storedb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [app-network]
+
+  product-service:
+    build: ./services/product-service
+    container_name: ii-product-service
+    environment:
+      PORT: 4001
+      PGHOST: postgres
+      PGPORT: 5432
+      PGUSER: store
+      PGPASSWORD: store
+      PGDATABASE: storedb
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "4001:4001"
+    networks: [app-network]
+
+  order-service:
+    build: ./services/order-service
+    container_name: ii-order-service
+    environment:
+      PORT: 4002
+      PGHOST: postgres
+      PGPORT: 5432
+      PGUSER: store
+      PGPASSWORD: store
+      PGDATABASE: storedb
+      PRODUCT_SERVICE_URL: http://product-service:4001
+    depends_on:
+      postgres:
+        condition: service_healthy
+      product-service:
+        condition: service_started
+    ports:
+      - "4002:4002"
+    networks: [app-network]
+
+  api-gateway:
+    build: ./services/api-gateway
+    container_name: ii-api-gateway
+    environment:
+      PORT: 8080
+      PRODUCT_SERVICE_URL: http://product-service:4001
+      ORDER_SERVICE_URL: http://order-service:4002
+    depends_on:
+      - product-service
+      - order-service
+    ports:
+      - "8080:8080"
+    networks: [app-network]
+
+  frontend:
+    build: ./services/frontend
+    container_name: ii-frontend
+    environment:
+      PORT: 3000
+      API_GATEWAY_PUBLIC_URL: http://localhost:8080
+
+      # Discovery/correlation data is mounted into the frontend
+      # container at /app/data.
+      DISCOVERY_OUTPUT_DIR: /app/data
+
+    volumes:
+      # Read-only access to discovery agent output.
+      - ../../discovery-agent/discovery-agent/agent/output:/app/data:ro
+
+    depends_on:
+      - api-gateway
+    ports:
+      - "3000:3000"
+    networks: [app-network]
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  pgdata:
