@@ -1,168 +1,140 @@
 ﻿from __future__ import annotations
 
 import os
-from uuid import UUID
+import sys
+from pathlib import Path
 
-try:
-    from fastapi import FastAPI, HTTPException, Query
-    from pydantic import BaseModel, Field
-except ImportError:
-    FastAPI = None
-    BaseModel = object
+SERVICE_ROOT = Path(__file__).resolve().parents[1]
 
+if str(SERVICE_ROOT) not in sys.path:
+    sys.path.insert(0, str(SERVICE_ROOT))
 
-class CreateIncidentRequest(BaseModel):
-    title: str = Field(min_length=1)
-    priority: str
-    affected_services: list[str] = Field(default_factory=list)
-    primary_suspect: str | None = None
-    confidence: float | None = Field(default=None, ge=0, le=1)
+from fastapi import FastAPI
 
+from api.incident_api import IncidentAPI
+from database.postgres_store import PostgresIncidentStore
 
-class StatusUpdateRequest(BaseModel):
-    status: str
-    expected_version: int = Field(ge=1)
+from realtime.connection_manager import ConnectionManager
+from realtime.postgres_event_store import PostgresRealtimeEventStore
+from realtime.redis_fanout import RedisFanout
+from realtime.realtime_service import RealtimeService
+from realtime.websocket_router import build_realtime_router
 
 
-def create_app(api=None):
-
-    if FastAPI is None:
-        raise RuntimeError(
-            "FastAPI is not installed. "
-            "Install with: python -m pip install fastapi uvicorn"
-        )
-
+def create_app(
+    store=None,
+    realtime_service=None,
+):
     app = FastAPI(
         title="Infrastructure Intelligence Incident Platform",
-        version="1.0.0",
+        version="0.3.0",
     )
 
-    if api is not None:
-        app.state.incident_api = api
+    if store is None:
+        database_url = os.getenv(
+            "DATABASE_URL",
+            "postgresql://postgres:postgres@localhost:5432/infrastructure_intelligence",
+        )
+
+        store = PostgresIncidentStore(
+            database_url,
+        )
+
+    incident_api = IncidentAPI(store)
+
+    if realtime_service is None:
+        event_store = PostgresRealtimeEventStore(
+            store,
+        )
+
+        connection_manager = ConnectionManager()
+        redis_fanout = RedisFanout()
+
+        realtime_service = RealtimeService(
+            event_store=event_store,
+            redis_fanout=redis_fanout,
+            connection_manager=connection_manager,
+        )
+    else:
+        connection_manager = realtime_service.connection_manager
+
+        if connection_manager is None:
+            connection_manager = ConnectionManager()
+            realtime_service.connection_manager = (
+                connection_manager
+            )
 
     @app.get("/health")
     def health():
         return {
             "status": "ok",
             "service": "incident-platform",
+            "realtime": True,
         }
 
-    @app.post("/api/incidents", status_code=201)
-    def create_incident(request: CreateIncidentRequest):
-
-        try:
-            return app.state.incident_api.create_incident(
-                title=request.title,
-                priority=request.priority,
-                affected_services=request.affected_services,
-                primary_suspect=request.primary_suspect,
-                confidence=request.confidence,
-            )
-        except ValueError as exc:
-            raise HTTPException(
-                status_code=400,
-                detail=str(exc),
-            )
+    @app.post("/api/incidents")
+    def create_incident(payload: dict):
+        return incident_api.create_incident(
+            title=payload["title"],
+            priority=payload.get(
+                "priority",
+                "P2",
+            ),
+            affected_services=payload.get(
+                "affected_services",
+                [],
+            ),
+            primary_suspect=payload.get(
+                "primary_suspect",
+            ),
+            confidence=payload.get(
+                "confidence",
+            ),
+        )
 
     @app.get("/api/incidents")
     def list_incidents(
-        status: str | None = Query(default=None),
-        priority: str | None = Query(default=None),
+        priority: str | None = None,
+        status: str | None = None,
     ):
-
-        try:
-            return app.state.incident_api.list_incidents(
-                status=status,
-                priority=priority,
-            )
-        except ValueError as exc:
-            raise HTTPException(
-                status_code=400,
-                detail=str(exc),
-            )
-
-    @app.get("/api/incidents/{incident_id}")
-    def get_incident(incident_id: UUID):
-
-        result = app.state.incident_api.get_incident(
-            incident_id
+        return incident_api.list_incidents(
+            priority=priority,
+            status=status,
         )
 
-        if result is None:
-            raise HTTPException(
-                status_code=404,
-                detail="Incident not found",
-            )
-
-        return result
+    @app.get("/api/incidents/{incident_id}")
+    def get_incident(incident_id):
+        return incident_api.get_incident(
+            incident_id,
+        )
 
     @app.patch("/api/incidents/{incident_id}/status")
     def change_status(
-        incident_id: UUID,
-        request: StatusUpdateRequest,
+        incident_id,
+        payload: dict,
     ):
-
-        try:
-            return app.state.incident_api.change_status(
-                incident_id=incident_id,
-                target_status=request.status,
-                expected_version=request.expected_version,
-            )
-
-        except KeyError as exc:
-            raise HTTPException(
-                status_code=404,
-                detail=str(exc),
-            )
-
-        except ValueError as exc:
-            raise HTTPException(
-                status_code=400,
-                detail=str(exc),
-            )
-
-        except RuntimeError as exc:
-            raise HTTPException(
-                status_code=409,
-                detail=str(exc),
-            )
+        return incident_api.change_status(
+            incident_id,
+            payload["status"],
+            payload["version"],
+        )
 
     @app.get("/api/incidents/{incident_id}/timeline")
-    def get_timeline(
-        incident_id: UUID,
-        after_sequence: int = Query(
-            default=0,
-            ge=0,
-        ),
-    ):
+    def timeline(incident_id):
+        return incident_api.timeline(
+            incident_id,
+        )
 
-        try:
-            return app.state.incident_api.timeline(
-                incident_id,
-                after_sequence,
-            )
+    realtime_router = build_realtime_router(
+        realtime_service,
+        connection_manager,
+    )
 
-        except KeyError as exc:
-            raise HTTPException(
-                status_code=404,
-                detail=str(exc),
-            )
+    app.include_router(
+        realtime_router,
+    )
 
     return app
 
 
-# Production entry point.
-# The database connection is intentionally constructed here,
-# not during module import, so tests can inject a fake store.
-
-if FastAPI is not None:
-    from database.postgres_store import PostgresIncidentStore
-    from api.incident_api import IncidentAPI
-
-    _store = PostgresIncidentStore(
-        os.getenv("DATABASE_URL")
-    )
-
-    _api = IncidentAPI(_store)
-
-    app = create_app(_api)
+app = create_app()
