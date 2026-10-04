@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import os
 import sys
@@ -12,6 +12,7 @@ if str(SERVICE_ROOT) not in sys.path:
 from fastapi import FastAPI
 
 from api.incident_api import IncidentAPI
+from api.intelligence_api import build_intelligence_router
 from database.postgres_store import PostgresIncidentStore
 
 from realtime.connection_manager import ConnectionManager
@@ -134,6 +135,13 @@ def create_app(
         realtime_router,
     )
 
+    intelligence_router = build_intelligence_router(
+        incident_api=incident_api,
+        realtime_service=realtime_service,
+        store=store,
+    )
+
+    app.include_router(intelligence_router)
     return app
 
 

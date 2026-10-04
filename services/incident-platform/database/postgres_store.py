@@ -1,5 +1,7 @@
 ﻿from __future__ import annotations
 
+from psycopg.types.json import Json
+
 import json
 import os
 from contextlib import contextmanager
@@ -20,6 +22,21 @@ class DatabaseUnavailable(RuntimeError):
 
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def json_default(value):
+    """
+    Convert Python values that JSON does not natively understand.
+    """
+    if isinstance(value, UUID):
+        return str(value)
+
+    if isinstance(value, datetime):
+        return value.isoformat()
+
+    raise TypeError(
+        f"Object of type {type(value).__name__} is not JSON serializable"
+    )
 
 
 class PostgresIncidentStore:
@@ -100,7 +117,8 @@ class PostgresIncidentStore:
             "resolved_at": incident.resolved_at,
             "version": incident.version,
             "affected_services": json.dumps(
-                incident.affected_services
+                incident.affected_services,
+                default=json_default,
             ),
             "primary_suspect": incident.primary_suspect,
             "confidence": incident.confidence,
@@ -128,7 +146,6 @@ class PostgresIncidentStore:
         status: str | None = None,
         priority: str | None = None,
     ) -> list[dict]:
-
         conditions = []
         parameters = []
 
@@ -164,7 +181,6 @@ class PostgresIncidentStore:
         status: str,
         resolved_at: datetime | None = None,
     ) -> dict | None:
-
         query = """
             UPDATE incidents
             SET
@@ -193,6 +209,98 @@ class PostgresIncidentStore:
 
                 return cursor.fetchone()
 
+    def create_anomaly(
+        self,
+        incident_id: UUID,
+        anomaly: dict,
+    ) -> dict:
+        query = """
+            INSERT INTO anomalies (
+                id,
+                incident_id,
+                service_id,
+                metric,
+                observed_value,
+                expected_value,
+                deviation,
+                severity,
+                confidence,
+                observed_at,
+                payload
+            )
+            VALUES (
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            )
+            RETURNING
+                id,
+                incident_id,
+                service_id,
+                metric,
+                observed_value,
+                expected_value,
+                deviation,
+                severity,
+                confidence,
+                observed_at,
+                payload
+        """
+
+        anomaly_id = UUID(str(anomaly["anomaly_id"]))
+
+        observed_at = anomaly.get(
+            "window_end",
+            anomaly.get("window_start"),
+        )
+
+        with self.connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    query,
+                    (
+                        anomaly_id,
+                        incident_id,
+                        anomaly["service_id"],
+                        anomaly["metric"],
+                        anomaly["observed_value"],
+                        anomaly.get("expected_value"),
+                        anomaly.get("deviation"),
+                        anomaly["severity"],
+                        anomaly["confidence"],
+                        observed_at,
+                        Json(
+                            anomaly,
+                            dumps=lambda value: json.dumps(
+                                value,
+                                default=json_default,
+                            ),
+                        ),
+                    ),
+                )
+
+                row = cursor.fetchone()
+
+                return {
+                    "id": str(row["id"]),
+                    "incident_id": (
+                        str(row["incident_id"])
+                        if row["incident_id"]
+                        else None
+                    ),
+                    "service_id": row["service_id"],
+                    "metric": row["metric"],
+                    "observed_value": row["observed_value"],
+                    "expected_value": row["expected_value"],
+                    "deviation": row["deviation"],
+                    "severity": row["severity"],
+                    "confidence": row["confidence"],
+                    "observed_at": (
+                        row["observed_at"].isoformat()
+                        if row["observed_at"]
+                        else None
+                    ),
+                    "payload": row["payload"],
+                }
+
     def append_event(
         self,
         incident_id: UUID,
@@ -201,7 +309,6 @@ class PostgresIncidentStore:
         payload: dict,
         occurred_at: datetime | None = None,
     ) -> dict:
-
         query = """
             INSERT INTO incident_events (
                 id,
@@ -222,6 +329,11 @@ class PostgresIncidentStore:
             RETURNING *
         """
 
+        serialized_payload = json.dumps(
+            payload,
+            default=json_default,
+        )
+
         with self.connection() as connection:
             with connection.cursor() as cursor:
                 cursor.execute(
@@ -231,7 +343,7 @@ class PostgresIncidentStore:
                         event_id,
                         event_type,
                         occurred_at or utc_now(),
-                        json.dumps(payload),
+                        serialized_payload,
                     ),
                 )
 
@@ -242,7 +354,6 @@ class PostgresIncidentStore:
         incident_id: UUID,
         after_sequence: int = 0,
     ) -> list[dict]:
-
         query = """
             SELECT *
             FROM incident_events
@@ -259,3 +370,21 @@ class PostgresIncidentStore:
                 )
 
                 return cursor.fetchall()
+
+    def get_incident_by_event_id(
+        self,
+        event_id: UUID,
+    ) -> dict | None:
+        query = """
+            SELECT i.*
+            FROM incidents i
+            INNER JOIN incident_events e
+                ON e.incident_id = i.id
+            WHERE e.event_id = %s
+            LIMIT 1
+        """
+
+        with self.connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(query, (event_id,))
+                return cursor.fetchone()

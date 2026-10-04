@@ -1,23 +1,31 @@
 ﻿from __future__ import annotations
 
-from uuid import UUID, uuid4
 from datetime import datetime, timezone
 from typing import Any
+from uuid import UUID, uuid4
 
 from realtime.events import RealtimeEvent
 
 
-class RealtimeService:
-    """
-    Durable-first incident event service.
+def _datetime(value):
+    if value is None:
+        return datetime.now(timezone.utc)
 
-    Required ordering:
-        PostgreSQL commit
-            ->
-        Redis publish
-            ->
-        WebSocket broadcast
-    """
+    if isinstance(value, datetime):
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value
+
+    value = str(value).replace("Z", "+00:00")
+    result = datetime.fromisoformat(value)
+
+    if result.tzinfo is None:
+        result = result.replace(tzinfo=timezone.utc)
+
+    return result
+
+
+class RealtimeService:
 
     def __init__(
         self,
@@ -35,37 +43,34 @@ class RealtimeService:
         event_type: str,
         payload: dict[str, Any],
         producer: str = "incident-platform",
+        event_id: UUID | None = None,
+        occurred_at=None,
     ) -> RealtimeEvent:
+
         latest = self.event_store.latest(incident_id)
 
-        next_sequence = (
-            latest.sequence + 1
+        sequence = (
+            int(latest.sequence) + 1
             if latest is not None
             else 1
         )
 
         return RealtimeEvent(
-            event_id=uuid4(),
+            event_id=event_id or uuid4(),
             event_type=event_type,
             incident_id=incident_id,
-            sequence=next_sequence,
-            occurred_at=datetime.now(timezone.utc),
+            sequence=sequence,
+            occurred_at=_datetime(occurred_at),
             payload=payload,
             producer=producer,
         )
 
-    async def persist_and_publish(
-        self,
-        event: RealtimeEvent,
-    ) -> RealtimeEvent:
-        # STEP 1: durable PostgreSQL persistence.
+    async def persist_and_publish(self, event):
         persisted = self.event_store.append(event)
 
-        # STEP 2: Redis fan-out.
         if self.redis_fanout is not None:
             await self.redis_fanout.publish(persisted)
 
-        # STEP 3: local WebSocket broadcast.
         if self.connection_manager is not None:
             await self.connection_manager.broadcast(
                 persisted.incident_id,
@@ -78,7 +83,7 @@ class RealtimeService:
         self,
         incident_id: UUID,
         after_sequence: int = 0,
-    ) -> list[RealtimeEvent]:
+    ):
         return self.event_store.list_since(
             incident_id,
             after_sequence,
