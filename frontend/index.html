@@ -1,0 +1,232 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+    <title>Infrastructure Intelligence — Incident Room</title>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+
+<body>
+<div class="app-shell">
+
+    <header class="topbar">
+        <div>
+            <div class="eyebrow">INFRASTRUCTURE INTELLIGENCE</div>
+            <h1>Incident Room</h1>
+        </div>
+
+        <div class="connection">
+            <span id="wsDot" class="dot offline"></span>
+            <span id="wsStatus">Disconnected</span>
+        </div>
+    </header>
+
+    <main class="layout">
+
+        <aside class="sidebar">
+
+            <div class="sidebar-header">
+                <h2>Incidents</h2>
+                <button id="refreshBtn" class="icon-btn">↻</button>
+            </div>
+
+            <div class="filters">
+                <select id="statusFilter">
+                    <option value="">All statuses</option>
+                    <option>DETECTED</option>
+                    <option>ACKNOWLEDGED</option>
+                    <option>TRIAGED</option>
+                    <option>INVESTIGATING</option>
+                    <option>MITIGATING</option>
+                    <option>RECOVERY_VERIFY</option>
+                    <option>RESOLVED</option>
+                </select>
+
+                <select id="priorityFilter">
+                    <option value="">All priorities</option>
+                    <option>P0</option>
+                    <option>P1</option>
+                    <option>P2</option>
+                    <option>P3</option>
+                </select>
+            </div>
+
+            <div id="incidentList" class="incident-list">
+                <div class="empty">Loading incidents...</div>
+            </div>
+
+        </aside>
+
+
+        <section class="room">
+
+            <div id="emptyRoom" class="empty-room">
+                <div class="empty-icon">◉</div>
+                <h2>Select an incident</h2>
+                <p>
+                    Choose an incident from the left to open the
+                    investigation room.
+                </p>
+            </div>
+
+
+            <div id="incidentRoom" class="incident-room hidden">
+
+                <section class="incident-header">
+
+                    <div class="incident-title">
+                        <div class="title-row">
+                            <span id="priorityBadge" class="badge"></span>
+                            <span id="statusBadge" class="status"></span>
+                        </div>
+
+                        <h2 id="incidentTitle"></h2>
+
+                        <div class="incident-id">
+                            ID: <code id="incidentId"></code>
+                        </div>
+                    </div>
+
+                    <div class="status-actions">
+                        <select id="statusSelect"></select>
+                        <button id="applyStatus" class="primary">
+                            Change status
+                        </button>
+                    </div>
+
+                </section>
+
+
+                <section class="summary-grid">
+
+                    <div class="card">
+                        <div class="card-label">PRIMARY SUSPECT</div>
+                        <div id="primarySuspect" class="card-value">
+                            —
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-label">RCA CONFIDENCE</div>
+                        <div id="confidence" class="card-value">
+                            —
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-label">BLAST RADIUS</div>
+                        <div id="blastRadius" class="card-value">
+                            —
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-label">BUSINESS CAPABILITY</div>
+                        <div id="businessCapability" class="card-value">
+                            —
+                        </div>
+                    </div>
+
+                </section>
+
+
+                <section class="services-card card">
+
+                    <div class="section-title">
+                        <h3>Affected services</h3>
+                    </div>
+
+                    <div id="services" class="service-list"></div>
+
+                </section>
+
+
+                <section class="content-grid">
+
+                    <div class="panel">
+
+                        <div class="panel-header">
+                            <h3>Live Timeline</h3>
+                            <span id="sequenceLabel">Sequence —</span>
+                        </div>
+
+                        <div id="timeline" class="timeline"></div>
+
+                    </div>
+
+
+                    <div class="panel">
+
+                        <div class="panel-header">
+                            <h3>Investigation Tasks</h3>
+                        </div>
+
+                        <form id="taskForm" class="inline-form">
+                            <input
+                                id="taskTitle"
+                                placeholder="Task title"
+                                required
+                            >
+
+                            <input
+                                id="taskAssignee"
+                                placeholder="Assignee"
+                            >
+
+                            <button class="primary" type="submit">
+                                Add
+                            </button>
+                        </form>
+
+                        <div id="tasks" class="task-list"></div>
+
+                    </div>
+
+                </section>
+
+
+                <section class="panel comments-panel">
+
+                    <div class="panel-header">
+                        <h3>Investigator Comments</h3>
+                    </div>
+
+                    <div id="comments" class="comments"></div>
+
+                    <form id="commentForm" class="comment-form">
+
+                        <input
+                            id="commentAuthor"
+                            value="investigator"
+                            placeholder="Your name"
+                            required
+                        >
+
+                        <textarea
+                            id="commentBody"
+                            placeholder="Add an investigation note..."
+                            required
+                        ></textarea>
+
+                        <button class="primary" type="submit">
+                            Add comment
+                        </button>
+
+                    </form>
+
+                </section>
+
+            </div>
+        </section>
+    </main>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="./app.js"></script>
+</body>
+</html>

@@ -138,3 +138,42 @@ def create_app(
 
 
 app = create_app()
+
+# ============================================================
+# Incident Room UI / Collaboration integration
+# ============================================================
+
+from pathlib import Path as _IncidentRoomPath
+
+from fastapi.middleware.cors import CORSMiddleware as _IncidentRoomCORS
+from fastapi.staticfiles import StaticFiles as _IncidentRoomStaticFiles
+
+from api.collaboration_api import router as _incident_room_router
+
+try:
+    app.add_middleware(
+        _IncidentRoomCORS,
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+except RuntimeError:
+    pass
+
+app.include_router(_incident_room_router)
+
+_incident_room_root = (
+    _IncidentRoomPath(__file__).resolve().parents[3]
+    / "frontend"
+)
+
+if _incident_room_root.exists():
+    app.mount(
+        "/incident-room",
+        _IncidentRoomStaticFiles(
+            directory=str(_incident_room_root),
+            html=True,
+        ),
+        name="incident-room",
+    )
