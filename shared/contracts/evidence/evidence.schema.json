@@ -1,0 +1,51 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://infrastructure-intelligence.local/schemas/evidence.schema.json",
+  "title": "Infrastructure Intelligence Evidence",
+  "type": "object",
+  "required": [
+    "evidence_id",
+    "type",
+    "description",
+    "source"
+  ],
+  "properties": {
+    "evidence_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "type": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "service_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "metric_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "anomaly_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uuid"
+    }
+  },
+  "additionalProperties": false
+}

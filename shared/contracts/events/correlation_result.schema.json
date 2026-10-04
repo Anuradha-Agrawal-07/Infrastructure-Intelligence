@@ -1,0 +1,73 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://infrastructure-intelligence.local/schemas/correlation_result.schema.json",
+  "title": "Correlation Result Event Payload",
+  "type": "object",
+  "required": [
+    "incident_candidate_id",
+    "affected_services",
+    "related_services",
+    "evidence_edges",
+    "raw_alerts",
+    "grouped_alerts",
+    "confidence"
+  ],
+  "properties": {
+    "incident_candidate_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "affected_services": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "related_services": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence_edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "source",
+          "target"
+        ],
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "relationship": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "raw_alerts": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "grouped_alerts": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,60 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://infrastructure-intelligence.local/schemas/anomaly_detected.schema.json",
+  "title": "Anomaly Detected Event Payload",
+  "type": "object",
+  "required": [
+    "anomaly_id",
+    "service_id",
+    "metric",
+    "observed_value",
+    "expected_value",
+    "deviation",
+    "detector",
+    "severity",
+    "confidence",
+    "window_start",
+    "window_end"
+  ],
+  "properties": {
+    "anomaly_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "service_id": {
+      "type": "string"
+    },
+    "metric": {
+      "type": "string"
+    },
+    "observed_value": {
+      "type": "number"
+    },
+    "expected_value": {
+      "type": "number"
+    },
+    "deviation": {
+      "type": "number"
+    },
+    "detector": {
+      "type": "string"
+    },
+    "severity": {
+      "type": "string"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "window_start": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "window_end": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}

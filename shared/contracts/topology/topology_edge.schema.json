@@ -1,0 +1,47 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://infrastructure-intelligence.local/schemas/topology_edge.schema.json",
+  "title": "Infrastructure Topology Edge",
+  "type": "object",
+  "required": [
+    "edge_id",
+    "source",
+    "target",
+    "protocol",
+    "remote_port",
+    "state",
+    "observed_connections",
+    "observed_at"
+  ],
+  "properties": {
+    "edge_id": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    },
+    "target": {
+      "type": "string"
+    },
+    "protocol": {
+      "type": "string"
+    },
+    "remote_port": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "state": {
+      "type": "string"
+    },
+    "observed_connections": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,106 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://infrastructure-intelligence.local/schemas/rca_result.schema.json",
+  "title": "RCA Result Event Payload",
+  "type": "object",
+  "required": [
+    "primary_suspect",
+    "hypotheses",
+    "evidence"
+  ],
+  "properties": {
+    "primary_suspect": {
+      "type": "string"
+    },
+    "hypotheses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "hypothesis_id",
+          "suspect",
+          "score",
+          "confidence",
+          "reasons"
+        ],
+        "properties": {
+          "hypothesis_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "suspect": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "temporal_precedence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "dependency_centrality": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "symptom_coverage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "change_correlation": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "metric_strength": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "evidence_id",
+          "type",
+          "description"
+        ],
+        "properties": {
+          "evidence_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

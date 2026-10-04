@@ -1,0 +1,56 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://infrastructure-intelligence.local/schemas/incident.schema.json",
+  "title": "Infrastructure Intelligence Incident",
+  "type": "object",
+  "required": [
+    "incident_id",
+    "title",
+    "status",
+    "priority",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "incident_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "title": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "priority": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "primary_suspect": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "affected_services": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "customer_path": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,54 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://infrastructure-intelligence.local/schemas/scenario.schema.json",
+  "title": "Infrastructure Intelligence Scenario",
+  "type": "object",
+  "required": [
+    "scenario_id",
+    "name",
+    "category",
+    "description",
+    "risk_level",
+    "injector_type",
+    "parameters",
+    "expected_signals",
+    "recovery_required",
+    "verification_required"
+  ],
+  "properties": {
+    "scenario_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "risk_level": {
+      "type": "string"
+    },
+    "injector_type": {
+      "type": "string"
+    },
+    "parameters": {
+      "type": "object"
+    },
+    "expected_signals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "recovery_required": {
+      "type": "boolean"
+    },
+    "verification_required": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

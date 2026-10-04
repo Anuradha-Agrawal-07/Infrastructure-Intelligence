@@ -1,0 +1,38 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://infrastructure-intelligence.local/schemas/impact_result.schema.json",
+  "title": "Impact Result Event Payload",
+  "type": "object",
+  "required": [
+    "priority",
+    "response_target",
+    "affected_services",
+    "customer_path",
+    "blast_radius",
+    "business_capability"
+  ],
+  "properties": {
+    "priority": {
+      "type": "string"
+    },
+    "response_target": {
+      "type": "string"
+    },
+    "affected_services": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "customer_path": {
+      "type": "string"
+    },
+    "blast_radius": {
+      "type": "string"
+    },
+    "business_capability": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,42 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://infrastructure-intelligence.local/schemas/metric.schema.json",
+  "title": "Infrastructure Telemetry Metric",
+  "type": "object",
+  "required": [
+    "metric_id",
+    "service_id",
+    "metric",
+    "value",
+    "observed_at"
+  ],
+  "properties": {
+    "metric_id": {
+      "type": "string"
+    },
+    "service_id": {
+      "type": "string"
+    },
+    "metric": {
+      "type": "string",
+      "enum": [
+        "request_latency_ms",
+        "request_count",
+        "error_rate",
+        "http_5xx_rate",
+        "cpu_percent",
+        "memory_percent",
+        "connection_count",
+        "queue_depth"
+      ]
+    },
+    "value": {
+      "type": "number"
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}

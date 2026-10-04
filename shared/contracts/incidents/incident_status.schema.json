@@ -1,0 +1,17 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://infrastructure-intelligence.local/schemas/incident_status.schema.json",
+  "title": "Incident Status",
+  "type": "string",
+  "enum": [
+    "DETECTED",
+    "ACKNOWLEDGED",
+    "TRIAGED",
+    "INVESTIGATING",
+    "MITIGATING",
+    "RECOVERY_VERIFY",
+    "RESOLVED",
+    "FALSE_POSITIVE",
+    "REOPENED"
+  ]
+}

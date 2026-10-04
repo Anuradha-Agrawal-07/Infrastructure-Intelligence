@@ -1,0 +1,35 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://infrastructure-intelligence.local/schemas/service.schema.json",
+  "title": "Infrastructure Service",
+  "type": "object",
+  "required": [
+    "service_id",
+    "name",
+    "version",
+    "type",
+    "owner",
+    "criticality"
+  ],
+  "properties": {
+    "service_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    },
+    "owner": {
+      "type": "string"
+    },
+    "criticality": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}
