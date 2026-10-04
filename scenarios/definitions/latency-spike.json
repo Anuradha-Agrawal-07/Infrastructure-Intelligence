@@ -1,0 +1,28 @@
+﻿{
+  "scenario_id": "latency-spike",
+  "name": "Synthetic Latency Spike",
+  "category": "performance",
+  "description": "Generate bounded synthetic latency telemetry for recovery verification.",
+  "risk_level": "LOW",
+  "injector_type": "synthetic_latency",
+  "parameters": {
+    "latency_ms": {
+      "type": "integer",
+      "minimum": 100,
+      "maximum": 5000,
+      "default": 1200
+    },
+    "duration_seconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 30,
+      "default": 5
+    }
+  },
+  "expected_signals": [
+    "request_latency_ms",
+    "error_rate"
+  ],
+  "recovery_required": true,
+  "verification_required": true
+}

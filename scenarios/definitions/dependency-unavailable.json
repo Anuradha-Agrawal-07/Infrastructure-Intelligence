@@ -1,0 +1,28 @@
+﻿{
+  "scenario_id": "dependency-unavailable",
+  "name": "Synthetic Dependency Unavailable",
+  "category": "dependency",
+  "description": "Generate a bounded synthetic dependency failure signal.",
+  "risk_level": "LOW",
+  "injector_type": "synthetic_dependency_failure",
+  "parameters": {
+    "dependency": {
+      "type": "string",
+      "minimum_length": 1,
+      "maximum_length": 100,
+      "default": "postgres"
+    },
+    "duration_seconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 30,
+      "default": 5
+    }
+  },
+  "expected_signals": [
+    "connection_count",
+    "error_rate"
+  ],
+  "recovery_required": true,
+  "verification_required": true
+}

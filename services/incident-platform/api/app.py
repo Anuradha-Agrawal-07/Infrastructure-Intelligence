@@ -177,3 +177,11 @@ if _incident_room_root.exists():
         ),
         name="incident-room",
     )
+
+# Phase 5 scenario execution + recovery API
+try:
+    from api.scenario_api import router as scenario_router
+except ImportError:
+    from scenario_api import router as scenario_router
+
+app.include_router(scenario_router)
